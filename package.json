@@ -10,6 +10,7 @@
     "author": "Jorge Velasquez <jorgeluisvelasquezv@gmail.com>",
     "license": "MIT",
     "workspaces": [
-        "products-ms"
+        "products-ms",
+        "client-gateway"
     ]
 }

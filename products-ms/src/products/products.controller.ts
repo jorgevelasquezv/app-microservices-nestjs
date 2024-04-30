@@ -1,9 +1,9 @@
-import { Controller, ParseIntPipe, BadRequestException } from '@nestjs/common';
+import { Controller, ParseIntPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationDto } from 'src/common/dto';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 
 @Controller('products')
 export class ProductsController {
@@ -16,6 +16,8 @@ export class ProductsController {
 
   @MessagePattern({ cmd: 'find_all_product' })
   findAll(@Payload() paginationDto: PaginationDto) {
+    console.log(paginationDto);
+
     return this.productsService.findAll(paginationDto);
   }
 
@@ -43,6 +45,7 @@ export class ProductsController {
 
 function parseIntPipeCustom(message: string) {
   return new ParseIntPipe({
-    exceptionFactory: () => new BadRequestException(message),
+    exceptionFactory: () =>
+      new RpcException({ message, error: 'Bad Request', statusCode: 400 }),
   });
 }
