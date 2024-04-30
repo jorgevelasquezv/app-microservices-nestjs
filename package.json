@@ -1,0 +1,15 @@
+{
+    "name": "products-app",
+    "version": "1.0.0",
+    "description": "App based in microservices ",
+    "scripts": {},
+    "keywords": [
+        "nestjs",
+        "microservices"
+    ],
+    "author": "Jorge Velasquez <jorgeluisvelasquezv@gmail.com>",
+    "license": "MIT",
+    "workspaces": [
+        "products-ms"
+    ]
+}
