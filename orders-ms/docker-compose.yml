@@ -1,0 +1,12 @@
+version: '3'
+services:
+  orders-db:
+    image: postgres:14.3
+    restart: always
+    container_name: orders
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: 0Rd3rsP4ssw0rd
+      POSTGRES_DB: orders
+    ports:
+      - 5433:5432

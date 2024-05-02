@@ -1,0 +1,1 @@
+1. Levantar base de datos postgres en docker con el comando `docker-compose up -d`
