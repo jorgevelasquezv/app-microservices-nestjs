@@ -1,18 +1,11 @@
+import { ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsPositive } from 'class-validator';
-import { OrderStatus } from '../enum/order.enum';
+import { OrderItemDto } from './order-item.dto';
 
 export class CreateOrderDto {
-  @IsNumber({ maxDecimalPlaces: 4 })
-  @IsPositive()
-  @Type(() => Number)
-  totalAmount: number;
-
-  @IsNumber({ maxDecimalPlaces: 4 })
-  @IsPositive()
-  @Type(() => Number)
-  totalItems: number;
-
-  @IsEnum(OrderStatus)
-  status: OrderStatus;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => OrderItemDto)
+  items: OrderItemDto[];
 }

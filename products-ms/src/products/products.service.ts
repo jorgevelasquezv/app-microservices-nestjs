@@ -77,6 +77,30 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     });
     return excludeKeys(product, ['available']);
   }
+
+  async validateProducts(ids: number[]) {
+    ids = Array.from(new Set(ids));
+    const validProducts = await this.product.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        available: true,
+      },
+    });
+
+    if (validProducts.length !== ids.length) {
+      const invalidIds = ids.filter(
+        (id) => !validProducts.map((product) => product.id).includes(id),
+      );
+      throw new RpcException({
+        message: `Products with ids ${invalidIds.join(', ')} not found`,
+        statusCode: 404,
+      });
+    }
+
+    return validProducts.map((product) => excludeKeys(product, ['available']));
+  }
 }
 
 function excludeKeys<Product>(

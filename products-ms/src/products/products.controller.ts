@@ -16,8 +16,6 @@ export class ProductsController {
 
   @MessagePattern({ cmd: 'find_all_product' })
   findAll(@Payload() paginationDto: PaginationDto) {
-    console.log(paginationDto);
-
     return this.productsService.findAll(paginationDto);
   }
 
@@ -40,6 +38,11 @@ export class ProductsController {
     id: number,
   ) {
     return this.productsService.remove(id);
+  }
+
+  @MessagePattern({ cmd: 'validate_products' })
+  validateProducts(@Payload() ids: number[]) {
+    return this.productsService.validateProducts(ids);
   }
 }
 
