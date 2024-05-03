@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 
 import { ChangeOrderStatusDto, CreateOrderDto } from './dto';
 import { PaginationDto } from './common/dto';
-import { PRODUCTS_SERVICE } from 'src/config';
+import { NATS_SERVICE } from '../config';
 import { firstValueFrom } from 'rxjs';
 import { Product } from './entities/product.entity';
 
@@ -12,15 +12,16 @@ import { Product } from './entities/product.entity';
 export class OrdersService extends PrismaClient implements OnModuleInit {
   private readonly logger: Logger = new Logger(OrdersService.name);
 
+  constructor(
+    @Inject(NATS_SERVICE)
+    private readonly client: ClientProxy,
+  ) {
+    super();
+  }
+
   async onModuleInit() {
     await this.$connect();
     this.logger.log('Connected to the database');
-  }
-  constructor(
-    @Inject(PRODUCTS_SERVICE)
-    private readonly productClient: ClientProxy,
-  ) {
-    super();
   }
 
   async create(createOrderDto: CreateOrderDto) {
@@ -30,7 +31,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
       const productIds: number[] = items.map((item) => item.productId);
 
       const products: Product[] = await firstValueFrom(
-        this.productClient.send({ cmd: 'validate_products' }, productIds),
+        this.client.send({ cmd: 'validate_products' }, productIds),
       );
 
       const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
@@ -110,18 +111,20 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
         },
       },
     });
-    const products: Product[] = await firstValueFrom(
-      this.productClient.send(
-        { cmd: 'validate_products' },
-        order.orderItems.map((item) => item.productId),
-      ),
-    );
 
     if (!order)
       throw new RpcException({
         statusCode: 404,
         message: `Order with id ${id} not found`,
       });
+
+    const products: Product[] = await firstValueFrom(
+      this.client.send(
+        { cmd: 'validate_products' },
+        order.orderItems.map((item) => item.productId),
+      ),
+    );
+
     return {
       ...order,
       orderItems: order.orderItems.map(

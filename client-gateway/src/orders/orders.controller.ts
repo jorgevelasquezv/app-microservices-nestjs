@@ -16,24 +16,24 @@ import {
   OrderPaginationFilterDto,
   OrderStatusDto,
 } from './dto';
-import { ORDERS_SERVICE } from '../config';
+import { NATS_SERVICE } from '../config';
 import { PaginationDto } from '../common';
 
 @Controller('orders')
 export class OrdersController {
   constructor(
-    @Inject(ORDERS_SERVICE)
-    private readonly ordersClient: ClientProxy,
+    @Inject(NATS_SERVICE)
+    private readonly client: ClientProxy,
   ) {}
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersClient.send({ cmd: 'create_order' }, createOrderDto);
+    return this.client.send({ cmd: 'create_order' }, createOrderDto);
   }
 
   @Get()
   findAll(@Query() orderPaginationFilterDto: OrderPaginationFilterDto) {
-    return this.ordersClient.send(
+    return this.client.send(
       { cmd: 'find_all_orders' },
       { ...orderPaginationFilterDto },
     );
@@ -44,7 +44,7 @@ export class OrdersController {
     @Param() status: OrderStatusDto,
     @Query() paginationDto: PaginationDto,
   ) {
-    return this.ordersClient.send(
+    return this.client.send(
       { cmd: 'find_all_orders' },
       { ...status, ...paginationDto },
     );
@@ -52,7 +52,7 @@ export class OrdersController {
 
   @Get('id/:id')
   findOneByStatus(@Param('id', ParseUUIDPipe) id: string) {
-    return this.ordersClient.send({ cmd: 'find_one_order' }, { id });
+    return this.client.send({ cmd: 'find_one_order' }, { id });
   }
 
   @Patch(':id')
@@ -60,9 +60,6 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() status: OrderStatusDto,
   ) {
-    return this.ordersClient.send(
-      { cmd: 'change_status_order' },
-      { id, ...status },
-    );
+    return this.client.send({ cmd: 'change_status_order' }, { id, ...status });
   }
 }

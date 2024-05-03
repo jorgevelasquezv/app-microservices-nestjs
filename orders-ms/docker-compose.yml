@@ -10,3 +10,11 @@ services:
       POSTGRES_DB: orders
     ports:
       - 5433:5432
+  nats:
+    image: nats:scratch
+    restart: always
+    container_name: nats
+    ports:
+      - 4222:4222
+      - 6222:6222
+      - 8222:8222
