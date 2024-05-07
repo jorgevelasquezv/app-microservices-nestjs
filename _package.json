@@ -8,10 +8,5 @@
         "microservices"
     ],
     "author": "Jorge Velasquez <jorgeluisvelasquezv@gmail.com>",
-    "license": "MIT",
-    "workspaces": [
-        "products-ms",
-        "client-gateway",
-        "orders-ms"
-    ]
+    "license": "MIT"
 }

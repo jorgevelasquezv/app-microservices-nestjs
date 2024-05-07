@@ -1,0 +1,75 @@
+version: '3'
+services:
+  client-gateway:
+    build:
+      context: ../../client-gateway
+      dockerfile: deploy/docker/Dockerfile
+    container_name: client-gateway
+    environment:
+      PORT: ${CLIENT_GATEWAY_PORT}
+      ORDERS_MICROSERVICES_HOST: ${CLIENT_GATEWAY_ORDERS_MICROSERVICES_HOST}
+      ORDERS_MICROSERVICES_PORT: ${CLIENT_GATEWAY_ORDERS_MICROSERVICES_PORT}
+      PRODUCTS_MICROSERVICES_HOST: ${CLIENT_GATEWAY_PRODUCTS_MICROSERVICES_HOST}
+      PRODUCTS_MICROSERVICES_PORT: ${CLIENT_GATEWAY_PRODUCTS_MICROSERVICES_PORT}
+      NATS_SERVERS: ${CLIENT_GATEWAY_NATS_SERVERS}
+    ports:
+      - "3000:3000"
+    networks:
+      - app_products
+  
+  orders-db:
+    image: postgres:14.3
+    restart: always
+    container_name: orders
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: 0Rd3rsP4ssw0rd
+      POSTGRES_DB: orders
+    ports:
+      - 5433:5432
+    networks:
+      - app_products
+
+  orders-ms:
+    build:
+      context: ../../orders-ms
+      dockerfile: deploy/docker/Dockerfile
+    container_name: orders-ms
+    environment:
+      PORT: ${ORDERS_PORT}
+      PRODUCTS_MICROSERVICES_HOST: ${ORDERS_PRODUCTS_MICROSERVICES_HOST} 
+      PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
+      NATS_SERVERS: ${ORDERS_NATS_SERVERS}
+      DATABASE_URL: ${ORDERS_DATABASE_URL}
+    ports:
+      - "3002:3002"
+    depends_on:
+      - orders-db
+    networks:
+      - app_products
+
+  products-ms:
+    build:
+      context: ../../products-ms
+      dockerfile: deploy/docker/Dockerfile
+    container_name: products-ms
+    environment:
+      PORT: ${PRODUCTS_PORT}
+      NATS_SERVERS: ${PRODUCTS_NATS_SERVERS}
+      DATABASE_URL: ${PRODUCTS_DATABASE_URL}
+    ports:
+      - "3001:3001"
+    networks:
+      - app_products
+
+  nats:
+    image: nats:scratch
+    ports:
+      - "4222:4222"
+      - "6222:6222"
+      - "8222:8222"
+    networks:
+      - app_products
+
+networks:
+  app_products:

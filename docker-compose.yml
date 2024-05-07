@@ -1,0 +1,72 @@
+version: '3'
+services:
+  nats-server:
+    image: nats:scratch
+    container_name: nats-server_c
+    ports:
+      - "8222:8222"
+      - "4222:4222"
+
+  # client-gateway:
+  #   build: ./client-gateway
+  #   container_name: client-gateway_c
+  #   depends_on: 
+  #     - nats-server
+  #   environment:
+  #     PORT: ${CLIENT_GATEWAY_PORT}
+  #     ORDERS_MICROSERVICES_HOST: ${CLIENT_GATEWAY_ORDERS_MICROSERVICES_HOST}
+  #     ORDERS_MICROSERVICES_PORT: ${CLIENT_GATEWAY_ORDERS_MICROSERVICES_PORT}
+  #     PRODUCTS_MICROSERVICES_HOST: ${CLIENT_GATEWAY_PRODUCTS_MICROSERVICES_HOST}
+  #     PRODUCTS_MICROSERVICES_PORT: ${CLIENT_GATEWAY_PRODUCTS_MICROSERVICES_PORT}
+  #     NATS_SERVERS: ${CLIENT_GATEWAY_NATS_SERVERS}
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./client-gateway/src:/usr/src/app/src
+  #   command: npm run start:dev
+  
+  orders-db:
+    image: postgres:14.3
+    restart: always
+    container_name: orders-db_c
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: 0Rd3rsP4ssw0rd
+      POSTGRES_DB: orders
+    # volumes:
+    #   - ./orders-ms/postgres:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+
+  # orders-ms:
+  #   build: ./orders-ms
+  #   container_name: orders-ms_c
+  #   depends_on:
+  #     - orders-db
+  #     - nats-server
+  #   environment:
+  #     PORT: ${ORDERS_PORT}
+  #     PRODUCTS_MICROSERVICES_HOST: ${ORDERS_PRODUCTS_MICROSERVICES_HOST} 
+  #     PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
+  #     NATS_SERVERS: ${ORDERS_NATS_SERVERS}
+  #     DATABASE_URL: ${ORDERS_DATABASE_URL}
+  #   ports:
+  #     - "3002:3002"
+  #   volumes:
+  #     - ./orders-ms/src:/usr/src/app/src
+  #   command: npm run docker:start
+
+  products-ms:
+    build: ./products-ms
+    container_name: products-ms_c
+    depends_on:
+      - nats-server
+    environment:
+      PORT: ${PRODUCTS_PORT}
+      NATS_SERVERS: ${PRODUCTS_NATS_SERVERS}
+      DATABASE_URL: ${PRODUCTS_DATABASE_URL}
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./products-ms/src:/usr/src/app/src
+    command: npm run docker:start

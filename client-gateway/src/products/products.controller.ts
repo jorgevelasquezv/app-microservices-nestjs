@@ -11,42 +11,76 @@ import {
   Body,
   Query,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { NATS_SERVICE } from '../config';
 import { CreateProductDto, UpdateProductDto } from './dto';
+import { firstValueFrom } from 'rxjs';
 
 @Controller('products')
 export class ProductsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
   @Post()
-  createProduct(@Body() createProductDto: CreateProductDto) {
-    return this.client.send({ cmd: 'create_product' }, { ...createProductDto });
+  async createProduct(@Body() createProductDto: CreateProductDto) {
+    try {
+      const product = await firstValueFrom(
+        this.client.send({ cmd: 'create_product' }, { ...createProductDto }),
+      );
+      return product;
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   @Get()
-  getProducts(@Query() paginationDto: PaginationDto) {
-    return this.client.send({ cmd: 'find_all_product' }, { ...paginationDto });
+  async getProducts(@Query() paginationDto: PaginationDto) {
+    try {
+      const products = await firstValueFrom(
+        this.client.send({ cmd: 'find_all_products' }, { ...paginationDto }),
+      );
+      return products;
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   @Get(':id')
   async getProduct(@Param('id', ParseIntPipe) id: number) {
-    return this.client.send({ cmd: 'find_one_product' }, { id });
+    try {
+      const product = await firstValueFrom(
+        this.client.send({ cmd: 'find_one_product' }, { id }),
+      );
+      return product;
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   @Patch(':id')
-  updateProduct(
+  async updateProduct(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProductDto: UpdateProductDto,
   ) {
-    return this.client.send(
-      { cmd: 'update_product' },
-      { id, ...updateProductDto },
-    );
+    try {
+      const product = await firstValueFrom(
+        this.client.send(
+          { cmd: 'update_product' },
+          { id, ...updateProductDto },
+        ),
+      );
+      return product;
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   @Delete(':id')
-  deleteProduct(@Param('id', ParseIntPipe) id: number) {
-    return this.client.send({ cmd: 'remove_product' }, { id });
+  async deleteProduct(@Param('id', ParseIntPipe) id: number) {
+    try {
+      const product = this.client.send({ cmd: 'remove_product' }, { id });
+      return product;
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 }

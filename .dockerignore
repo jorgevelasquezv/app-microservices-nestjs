@@ -1,0 +1,13 @@
+
+dist/
+node_modules/
+coverage/
+postgres
+
+.env
+
+.git/
+.gitignore
+
+
+
