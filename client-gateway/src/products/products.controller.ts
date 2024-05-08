@@ -36,7 +36,7 @@ export class ProductsController {
   async getProducts(@Query() paginationDto: PaginationDto) {
     try {
       const products = await firstValueFrom(
-        this.client.send({ cmd: 'find_all_products' }, { ...paginationDto }),
+        this.client.send({ cmd: 'find_all_product' }, { ...paginationDto }),
       );
       return products;
     } catch (error) {

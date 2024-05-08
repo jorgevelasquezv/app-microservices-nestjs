@@ -2,11 +2,12 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PrismaClient } from '@prisma/client';
 
-import { ChangeOrderStatusDto, CreateOrderDto } from './dto';
+import { ChangeOrderStatusDto, CreateOrderDto, PaidOrderDto } from './dto';
 import { PaginationDto } from './common/dto';
 import { NATS_SERVICE } from '../config';
 import { firstValueFrom } from 'rxjs';
 import { Product } from './entities/product.entity';
+import { OrderWithProducts } from './interfaces';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -64,14 +65,14 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
           },
         },
       });
+      console.log({ orderItemsInService: order.orderItems });
 
       return {
         ...order,
-        orderItems: order.orderItems.map(
-          (item) =>
-            ({ ...item, name: products.find((p) => p.id === item.productId) })
-              .name,
-        ),
+        orderItems: order.orderItems.map((item) => ({
+          ...item,
+          name: products.find((p) => p.id === item.productId).name,
+        })),
       };
     } catch (error) {
       throw new RpcException(error);
@@ -143,5 +144,48 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
       where: { id },
       data: { status },
     });
+  }
+
+  async createPaymentSession(order: OrderWithProducts) {
+    const { id, orderItems } = order;
+
+    const payload = {
+      orderId: id,
+      currency: 'usd',
+      items: orderItems.map(({ name, price, quantity }) => ({
+        name,
+        quantity,
+        price,
+      })),
+    };
+    console.log({ payload });
+
+    const paymentSession = await firstValueFrom(
+      this.client.send('create.payment.session', payload),
+    );
+    return paymentSession;
+  }
+
+  async paidOrder(paidOrderDto: PaidOrderDto) {
+    console.log({ paidOrderDto });
+
+    const { orderId, stripePaymentId, receiptUrl } = paidOrderDto;
+
+    const order = await this.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'PAID',
+        paid: true,
+        paidAt: new Date(),
+        stripeChargeId: stripePaymentId,
+        OrderReceipt: {
+          create: {
+            receiptUrl,
+          },
+        },
+      },
+    });
+
+    return order;
   }
 }

@@ -38,23 +38,23 @@ services:
     ports:
       - 5433:5432
 
-  # orders-ms:
-  #   build: ./orders-ms
-  #   container_name: orders-ms_c
-  #   depends_on:
-  #     - orders-db
-  #     - nats-server
-  #   environment:
-  #     PORT: ${ORDERS_PORT}
-  #     PRODUCTS_MICROSERVICES_HOST: ${ORDERS_PRODUCTS_MICROSERVICES_HOST} 
-  #     PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
-  #     NATS_SERVERS: ${ORDERS_NATS_SERVERS}
-  #     DATABASE_URL: ${ORDERS_DATABASE_URL}
-  #   ports:
-  #     - "3002:3002"
-  #   volumes:
-  #     - ./orders-ms/src:/usr/src/app/src
-  #   command: npm run docker:start
+  orders-ms:
+    build: ./orders-ms
+    container_name: orders-ms_c
+    depends_on:
+      - orders-db
+      - nats-server
+    environment:
+      PORT: ${ORDERS_PORT}
+      PRODUCTS_MICROSERVICES_HOST: ${ORDERS_PRODUCTS_MICROSERVICES_HOST} 
+      PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
+      NATS_SERVERS: ${ORDERS_NATS_SERVERS}
+      DATABASE_URL: ${ORDERS_DATABASE_URL}
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./orders-ms/src:/usr/src/app/src
+    command: npm run docker:start
 
   products-ms:
     build: ./products-ms
