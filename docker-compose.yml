@@ -50,8 +50,6 @@ services:
       PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
       NATS_SERVERS: ${ORDERS_NATS_SERVERS}
       DATABASE_URL: ${ORDERS_DATABASE_URL}
-    ports:
-      - "3002:3002"
     volumes:
       - ./orders-ms/src:/usr/src/app/src
     command: npm run docker:start
@@ -65,8 +63,20 @@ services:
       PORT: ${PRODUCTS_PORT}
       NATS_SERVERS: ${PRODUCTS_NATS_SERVERS}
       DATABASE_URL: ${PRODUCTS_DATABASE_URL}
-    ports:
-      - "3001:3001"
     volumes:
       - ./products-ms/src:/usr/src/app/src
     command: npm run docker:start
+
+  payments-ms:
+    build: ./payments-ms
+    container_name: payments-ms_c
+    depends_on:
+      - nats-server
+    environment:
+      PORT: ${PAYMENTS_PORT}
+      NATS_SERVERS: ${PAYMENTS_NATS_SERVERS}
+    ports:
+      - ${PAYMENTS_PORT}:${PAYMENTS_PORT}
+    volumes:
+      - ./payments-ms/src:/usr/src/app/src
+    command: npm run start:dev

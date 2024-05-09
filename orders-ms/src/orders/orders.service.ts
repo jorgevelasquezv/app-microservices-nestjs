@@ -167,8 +167,6 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
   }
 
   async paidOrder(paidOrderDto: PaidOrderDto) {
-    console.log({ paidOrderDto });
-
     const { orderId, stripePaymentId, receiptUrl } = paidOrderDto;
 
     const order = await this.order.update({
