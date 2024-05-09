@@ -1,0 +1,37 @@
+version: '3'
+services:
+  client-gateway:
+    build: 
+      context: ../../client-gateway
+      dockerfile: Dockerfile.prod
+    image: jorgelvelasquez/client-gateway
+
+  orders-ms:
+    build: 
+      context: ../../orders-ms
+      dockerfile: Dockerfile.prod
+    image: jorgelvelasquez/orders-ms
+    environment:
+      PORT: ${ORDERS_PORT}
+      PRODUCTS_MICROSERVICES_HOST: ${ORDERS_PRODUCTS_MICROSERVICES_HOST} 
+      PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
+      NATS_SERVERS: ${ORDERS_NATS_SERVERS}
+      DATABASE_URL: ${ORDERS_DATABASE_URL}
+
+  products-ms:
+    build: 
+      context: ../../products-ms
+      dockerfile: Dockerfile.prod
+    image: jorgelvelasquez/products-ms    
+
+  payments-ms:
+    build: 
+      context: ../../payments-ms
+      dockerfile: Dockerfile.prod
+    image: jorgelvelasquez/payments-ms
+  
+  auth-ms:
+    build: 
+      context: ../../auth-ms
+      dockerfile: Dockerfile.prod
+    image: jorgelvelasquez/auth-ms

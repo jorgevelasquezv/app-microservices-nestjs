@@ -2,14 +2,13 @@ version: '3'
 services:
   nats-server:
     image: nats:scratch
-    container_name: nats-server_c
+    container_name: nats-server
     ports:
       - "8222:8222"
-      # - "4222:4222"
 
   client-gateway:
-    build: ../../client-gateway
-    container_name: client-gateway_c
+    image: jorgelvelasquez/client-gateway
+    container_name: client-gateway
     depends_on: 
       - nats-server
     environment:
@@ -20,27 +19,22 @@ services:
       PRODUCTS_MICROSERVICES_PORT: ${CLIENT_GATEWAY_PRODUCTS_MICROSERVICES_PORT}
       NATS_SERVERS: ${CLIENT_GATEWAY_NATS_SERVERS}
     ports:
-      - "3000:3000"
-    volumes:
-      - ../../client-gateway/src:/usr/src/app/src
-    command: npm run start:dev
-  
-  orders-db:
-    image: postgres:14.3
-    restart: always
-    container_name: orders-db_c
-    environment:
-      POSTGRES_USER: orders
-      POSTGRES_PASSWORD: 0Rd3rsP4ssw0rd
-      POSTGRES_DB: orders
-    # volumes:
-    #   - ../../orders-ms/postgres:/var/lib/postgresql/data
-    ports:
-      - 5433:5432
+      - ${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}
+
+  # orders-db:
+  #   image: postgres:14.3
+  #   restart: always
+  #   container_name: orders-db
+  #   environment:
+  #     POSTGRES_USER: ${ORDERS_DB_USER}
+  #     POSTGRES_PASSWORD: ${ORDERS_DB_PASSWORD}
+  #     POSTGRES_DB: ${ORDERS_DB}
+  #   ports:
+  #     - 5433:5432
 
   orders-ms:
-    build: ../../orders-ms
-    container_name: orders-ms_c
+    image: jorgelvelasquez/orders-ms
+    container_name: orders-ms
     depends_on:
       - orders-db
       - nats-server
@@ -50,26 +44,20 @@ services:
       PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
       NATS_SERVERS: ${ORDERS_NATS_SERVERS}
       DATABASE_URL: ${ORDERS_DATABASE_URL}
-    volumes:
-      - ../../orders-ms/src:/usr/src/app/src
-    command: npm run docker:start
 
   products-ms:
-    build: ../../products-ms
-    container_name: products-ms_c
+    image: jorgelvelasquez/products-ms
+    container_name: products-ms
     depends_on:
       - nats-server
     environment:
       PORT: ${PRODUCTS_PORT}
       NATS_SERVERS: ${PRODUCTS_NATS_SERVERS}
       DATABASE_URL: ${PRODUCTS_DATABASE_URL}
-    volumes:
-      - ../../products-ms/src:/usr/src/app/src
-    command: npm run docker:start
 
   payments-ms:
-    build: ../../payments-ms
-    container_name: payments-ms_c
+    image: jorgelvelasquez/payments-ms
+    container_name: payments-ms
     depends_on:
       - nats-server
     environment:
@@ -77,13 +65,10 @@ services:
       NATS_SERVERS: ${PAYMENTS_NATS_SERVERS}
     ports:
       - ${PAYMENTS_PORT}:${PAYMENTS_PORT}
-    volumes:
-      - ../../payments-ms/src:/usr/src/app/src
-    command: npm run start:dev
 
   auth-ms:
-    build: ../../auth-ms
-    container_name: auth-ms_c
+    image: jorgelvelasquez/auth-ms
+    container_name: auth-ms
     depends_on:
       - nats-server
     environment:
@@ -94,6 +79,3 @@ services:
       JWT_EXPIRES_IN: ${AUTH_JWT_EXPIRES_IN}
     ports:
       - ${AUTH_PORT}:${AUTH_PORT}
-    volumes:
-      - ../../auth-ms/src:/usr/src/app/src
-    command: npm run start:dev

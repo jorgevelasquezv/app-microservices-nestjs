@@ -1,0 +1,96 @@
+version: '3'
+services:
+    nats-server:
+        image: nats:scratch
+        container_name: nats-server
+        ports:
+            - '8222:8222'
+
+    client-gateway:
+        build:
+            context: ../../client-gateway
+            dockerfile: Dockerfile.prod
+        image: jorgelvelasquez/client-gateway
+        container_name: client-gateway
+        restart: always
+        depends_on:
+            - nats-server
+        environment:
+            PORT: ${CLIENT_GATEWAY_PORT}
+            ORDERS_MICROSERVICES_HOST: ${CLIENT_GATEWAY_ORDERS_MICROSERVICES_HOST}
+            ORDERS_MICROSERVICES_PORT: ${CLIENT_GATEWAY_ORDERS_MICROSERVICES_PORT}
+            PRODUCTS_MICROSERVICES_HOST: ${CLIENT_GATEWAY_PRODUCTS_MICROSERVICES_HOST}
+            PRODUCTS_MICROSERVICES_PORT: ${CLIENT_GATEWAY_PRODUCTS_MICROSERVICES_PORT}
+            NATS_SERVERS: ${CLIENT_GATEWAY_NATS_SERVERS}
+        ports:
+            - ${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}
+
+    orders-ms:
+        build:
+            context: ../../orders-ms
+            dockerfile: Dockerfile.prod
+            args:
+                - ORDERS_DATABASE_URL=${ORDERS_DATABASE_URL}
+        image: jorgelvelasquez/orders-ms
+        container_name: orders-ms
+        restart: always
+        depends_on:
+            - orders-db
+            - nats-server
+        environment:
+            PORT: ${ORDERS_PORT}
+            PRODUCTS_MICROSERVICES_HOST: ${ORDERS_PRODUCTS_MICROSERVICES_HOST}
+            PRODUCTS_MICROSERVICES_PORT: ${ORDERS_PRODUCTS_MICROSERVICES_PORT}
+            NATS_SERVERS: ${ORDERS_NATS_SERVERS}
+            DATABASE_URL: ${ORDERS_DATABASE_URL}
+
+    products-ms:
+        build:
+            context: ../../products-ms
+            dockerfile: Dockerfile.prod
+        image: jorgelvelasquez/products-ms
+        container_name: products-ms
+        restart: always
+        depends_on:
+            - nats-server
+        environment:
+            PORT: ${PRODUCTS_PORT}
+            NATS_SERVERS: ${PRODUCTS_NATS_SERVERS}
+            DATABASE_URL: ${PRODUCTS_DATABASE_URL}
+
+    payments-ms:
+        build:
+            context: ../../payments-ms
+            dockerfile: Dockerfile.prod
+        image: jorgelvelasquez/payments-ms
+        container_name: payments-ms
+        restart: always
+        depends_on:
+            - nats-server
+        environment:
+            PORT: ${PAYMENTS_PORT}
+            STRIPE_WEBHOOK_SECRET: ${PAYMENTS_STRIPE_SECRET}
+            STRIPE_SUCCESS_URL: ${PAYMENTS_STRIPE_WEBHOOK_SECRET}
+            STRIPE_CANCEL_URL: ${PAYMENTS_STRIPE_SUCCESS_URL}
+            STRIPE_SECRET: ${PAYMENTS_STRIPE_CANCEL_URL}
+            NATS_SERVERS: ${PAYMENTS_NATS_SERVERS}
+        ports:
+            - ${PAYMENTS_PORT}:${PAYMENTS_PORT}
+
+    auth-ms:
+        build:
+            context: ../../auth-ms
+            dockerfile: Dockerfile.prod
+        image: jorgelvelasquez/auth-ms
+        container_name: auth-ms
+        restart: always
+        depends_on:
+            - nats-server
+        environment:
+            PORT: ${AUTH_PORT}
+            NATS_SERVERS: ${AUTH_NATS_SERVERS}
+            DATABASE_URL: ${AUTH_DATABASE_URL}
+            JWT_SECRET: ${AUTH_JWT_SECRET}
+            JWT_EXPIRES_IN: ${AUTH_JWT_EXPIRES_IN}
+        ports:
+            - ${AUTH_PORT}:${AUTH_PORT}
